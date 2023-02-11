@@ -33,8 +33,6 @@ public class OrderRepository {
 
     public void addOrderPartnerPair(String orderId, String partnerId){
 
-        assignedOrder++;
-
         //This is basically assigning that order to that partnerId
         Set<String> orders = new HashSet<>();
 
@@ -44,30 +42,19 @@ public class OrderRepository {
 
         orders.add(orderId);
         partnerOrderDb.put(partnerId, orders);
+        DeliveryPartner partner = partnerDb.get(partnerId);
+        partner.setNumberOfOrders(orders.size());
+        orderPartnerDb.put(orderId, partnerId);
     }
 
 
     public Order getOrderById(String orderId){
-
-        Order order= null;
-        //order should be returned with an orderId.
-        if(orderDb.containsKey(orderId)){
-            order = orderDb.get(orderId);
-        }
-
-        return order;
+        return orderDb.get(orderId);
     }
 
 
     public DeliveryPartner getPartnerById(String partnerId){
-
-        DeliveryPartner deliveryPartner = null;
-        //deliveryPartner should contain the value given by partnerId
-        if(partnerDb.containsKey(partnerId)){
-            deliveryPartner = partnerDb.get(partnerId);
-        }
-
-        return deliveryPartner;
+        return partnerDb.get(partnerId);
     }
 
 
@@ -85,23 +72,19 @@ public class OrderRepository {
 
     public List<String> getOrdersByPartnerId(String partnerId){
 
-        List<String> orders = null;
+        Set<String> orders = new HashSet<>();
 
         //orders should contain a list of orders by PartnerId
         if(partnerOrderDb.containsKey(partnerId)){
-            orders.addAll(partnerOrderDb.get(partnerId));
+            orders = partnerOrderDb.get(partnerId);
         }
 
-        return orders;
+        return new ArrayList<>(orders);
     }
 
 
     public List<String> getAllOrders(){
-        List<String> orders = null;
-
-        //Get all orders
-        orders.addAll(orderDb.keySet());
-        return orders;
+        return new ArrayList<>(orderDb.keySet());
     }
 
 
@@ -109,7 +92,13 @@ public class OrderRepository {
         Integer countOfOrders = 0;
 
         //Count of orders that have not been assigned to any DeliveryPartner
-        countOfOrders = orderDb.size() - assignedOrder;
+        List<String> orderList = new ArrayList<>(orderDb.keySet());
+        for(String oderId : orderList){
+            if(!orderPartnerDb.containsKey(oderId)){
+                countOfOrders++;
+            }
+        }
+
         return countOfOrders;
     }
 
