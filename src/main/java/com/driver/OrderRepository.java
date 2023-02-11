@@ -9,15 +9,13 @@ public class OrderRepository {
     private HashMap<String, String> orderPartnerDb;
     private HashMap<String, Set<String>> partnerOrderDb;
 
-    private int assignedOrder;
-
     public OrderRepository(){
 
         this.orderDb = new HashMap<>();
         this.partnerDb = new HashMap<>();
         this.orderPartnerDb = new HashMap<>();
         this.partnerOrderDb = new HashMap<>();
-        this.assignedOrder = 0;
+
     }
 
     public void addOrder(Order order){
@@ -165,24 +163,42 @@ public class OrderRepository {
 
         //Delete the partnerId
         //And push all his assigned orders to unassigned orders.
-        partnerDb.remove(partnerId);
-        int numberOfOrders = partnerOrderDb.get(partnerId).size();
-        assignedOrder -= numberOfOrders;
-        partnerOrderDb.put(partnerId, new HashSet<>());
+        Set<String> orderSet = new HashSet<>();
+        if(partnerOrderDb.containsKey(partnerId)){
+            orderSet = partnerOrderDb.get(partnerId);
+
+            for(String order : orderSet){
+                if(orderPartnerDb.containsKey(order)){
+                    orderPartnerDb.remove(order);
+                }
+            }
+
+            partnerOrderDb.remove(partnerId);
+        }
+
+        if(partnerDb.containsKey(partnerId)){
+            partnerDb.remove(partnerId);
+        }
     }
 
     public void deleteOrderById(String orderId){
 
         //Delete an order and also
         // remove it from the assigned order of that partnerId
-        orderDb.remove(orderId);
-        for(String partnerId : partnerOrderDb.keySet()){
-            Set<String> orderSet = partnerOrderDb.get(partnerId);
-            if(orderSet.contains(orderId)){
-                orderSet.remove(orderId);
-                partnerOrderDb.put(partnerId, orderSet);
-                break;
-            }
-        }
+       if(orderPartnerDb.containsKey(orderId)){
+           String partnerId = orderPartnerDb.get(orderId);
+
+           Set<String> orderSet = partnerOrderDb.get(partnerId);
+           orderSet.remove(orderId);
+           partnerOrderDb.put(partnerId, orderSet);
+
+           // Reset partner's order number
+           DeliveryPartner partner = partnerDb.get(partnerId);
+           partner.setNumberOfOrders(orderSet.size());
+       }
+
+       if(orderDb.containsKey(orderId)){
+           orderDb.remove(orderId);
+       }
     }
 }
